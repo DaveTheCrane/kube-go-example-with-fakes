@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -19,5 +20,6 @@ func (serv *HelloServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) 
 
 func (serv *HelloServer) greet(resp http.ResponseWriter, name string) {
 	resp.WriteHeader(http.StatusOK)
-	resp.Write([]byte("Hello, Fred"))
+	msg := fmt.Sprintf("Hello, %s", name)
+	resp.Write([]byte(msg))
 }
