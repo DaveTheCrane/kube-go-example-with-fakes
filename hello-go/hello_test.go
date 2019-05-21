@@ -30,4 +30,24 @@ func TestGETHello(t *testing.T) {
 		assert.Equal(t, response.Code, http.StatusOK)
 		assert.Equal(t, response.Body.String(), "Hello, Wilma")
 	})
+
+	t.Run("greet with no path", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/hello", nil)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, response.Body.String(), "Hello")
+	})
+
+	t.Run("greet with long path", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/hello/hello/is/anybody/in/there", nil)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, response.Body.String(), "Hello, hello/is/anybody/in/there")
+	})
 }
