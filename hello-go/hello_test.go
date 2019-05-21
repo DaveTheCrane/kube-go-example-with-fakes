@@ -22,7 +22,7 @@ func TestGETHello(t *testing.T) {
 	})
 
 	t.Run("greet Wilma", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/hello/%s", "Fred"), nil)
+		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/hello/%s", "Wilma"), nil)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
