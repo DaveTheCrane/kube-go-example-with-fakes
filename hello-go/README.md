@@ -12,6 +12,16 @@ The code has been developed test first, with unit and integration tests.
 
 `go test`
 
-## Run Server Locally
+## Run Server Locally (and verify it manually)
+
+`go build`
+`./hello-go` 
+
+This will block the shell, until killed with a `Ctrl-C`.
+
+In a separate terminal, type
+
+`curl -X GET http://localhost:8090/hello/Fred`
 
 ## Build Docker Image
+
