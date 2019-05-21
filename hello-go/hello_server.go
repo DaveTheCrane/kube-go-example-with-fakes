@@ -32,5 +32,7 @@ func (serv *HelloServer) greet(resp http.ResponseWriter, name string) {
 	} else {
 		msg = "Hello"
 	}
+	
+	fmt.Print(fmt.Sprintf("serving greeting - %s\n", msg))
 	resp.Write([]byte(msg))
 }
