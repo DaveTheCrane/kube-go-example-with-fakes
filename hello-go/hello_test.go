@@ -17,7 +17,7 @@ func TestGETHello(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, response.Body.String(), "Hello, Fred")
 	})
 
@@ -27,7 +27,7 @@ func TestGETHello(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, response.Body.String(), "Hello, Wilma")
 	})
 
@@ -37,7 +37,7 @@ func TestGETHello(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, response.Body.String(), "Hello")
 	})
 
@@ -47,7 +47,16 @@ func TestGETHello(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, response.Body.String(), "Hello, hello/is/anybody/in/there")
+	})
+
+	t.Run("call non greeting path", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/is/anybody/in/there", nil)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 }

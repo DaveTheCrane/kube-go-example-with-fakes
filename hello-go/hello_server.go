@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type HelloServer struct {
@@ -12,15 +13,18 @@ type HelloServer struct {
 func (serv *HelloServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 	var name string
-	if (len(path) > len("/hello/")) {
-		name = path[len("/hello/"):]
-	} else {
-		name = ""
-	}
-
-	switch req.Method {
+	if (strings.HasPrefix(path, "/hello")) {
+		if (len(path) > len("/hello/")) {
+			name = path[len("/hello/"):]
+		} else {
+			name = ""
+		}
+		switch req.Method {
 		case http.MethodGet:
 			serv.greet(resp, name)
+		}
+	} else {
+		serv.notFound(resp)
 	}
 }
 
@@ -35,4 +39,9 @@ func (serv *HelloServer) greet(resp http.ResponseWriter, name string) {
 	
 	fmt.Print(fmt.Sprintf("serving greeting - %s\n", msg))
 	resp.Write([]byte(msg))
+}
+
+func (serv *HelloServer) notFound(resp http.ResponseWriter) {
+	resp.WriteHeader(http.StatusNotFound)
+	resp.Write([]byte("Not Found"))
 }
