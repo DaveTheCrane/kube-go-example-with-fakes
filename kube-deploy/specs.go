@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+/* build a deployment, i.e. a persistent set of pods */
 func deploymentSpec(deploymentName string, imageName string, imageTag string, 
 	containerName string, containerPort int32, 
 	labels map[string]string) *appsv1.Deployment {
@@ -44,6 +45,28 @@ func deploymentSpec(deploymentName string, imageName string, imageTag string,
 	}
 
 	return deployment
+}
+
+/* wrap a deployment in a service, exposing it to outside world */
+func serviceSpec(serviceName string, servicePort int32,
+	labels map[string]string) *apiv1.Service {
+
+	service := &apiv1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: serviceName,
+		},
+		Spec: apiv1.ServiceSpec{
+			Type:     apiv1.ServiceTypeNodePort,
+			Selector: labels,
+			Ports: []apiv1.ServicePort{
+				{
+					Port: servicePort,
+				},
+			},
+		},
+	}
+
+	return service
 }
 
 func int32Ptr(i int32) *int32 { return &i }

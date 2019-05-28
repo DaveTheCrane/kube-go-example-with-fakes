@@ -1,28 +1,17 @@
-/*
-Copyright 2017 The Kubernetes Authors.
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-// Note: the example only works with the code within the same release/branch.
 package main
 
 import (
 	"flag"
 	"fmt"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"path/filepath"
 
 	apiv1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	restclient "k8s.io/client-go/rest"
 	//
 	// Uncomment to load all auth plugins
 	// _ "k8s.io/client-go/plugin/pkg/client/auth
@@ -35,6 +24,30 @@ import (
 )
 
 func main() {
+
+	//specifications
+	labels := map[string]string{
+		"app": "hello-world",
+	}
+	containerPort := int32(8090)
+	deployment := deploymentSpec("hello-deployment", "hello-go", "0.0.1", "hello-web-container", containerPort, labels)
+	service := serviceSpec("hello-service", containerPort, labels)
+
+	config := resolveConfig()
+
+	// Create Deployment
+	fmt.Println("Creating deployment...")
+	deploymentInstance := createDeployment(config, deployment)
+	fmt.Printf("Created deployment %q.\n", deploymentInstance.GetObjectMeta().GetName())
+
+	// Create Service To Wrap Deployment
+	fmt.Println("Wrapping in service...")
+	serviceInstance := createService(config, service)
+	fmt.Printf("Wrapped service %q. \n", serviceInstance.Name)
+}
+
+
+func resolveConfig() *restclient.Config {
 	var kubeconfig *string
 	if home := homedir.HomeDir(); home != "" {
 		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
@@ -47,24 +60,28 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
 
+	return config
+}
+
+func createDeployment(config *restclient.Config, deployment *appsv1.Deployment) *appsv1.Deployment {
+	clientset := kubernetes.NewForConfigOrDie(config)
 	deploymentsClient := clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
-	labels := map[string]string{
-			"app": "hello-world",
-		}
-	deployment := deploymentSpec("demo-deployment", "hello-go", "0.0.1", "hello-web", 8090, labels)
-
-	// Create Deployment
-	fmt.Println("Creating deployment...")
-	result, err := deploymentsClient.Create(deployment)
+	deploymentInstance, err := deploymentsClient.Create(deployment)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
+
+	return deploymentInstance
+}
+
+func createService(config *restclient.Config, service *apiv1.Service) *apiv1.Service {
+	coreV1Client := v1.NewForConfigOrDie(config)
+	serviceInstance, err := coreV1Client.Services(apiv1.NamespaceDefault).Create(service)
+	if err != nil {
+		panic(err)
+	}
+	return serviceInstance
 }
 
 // 	// Update Deployment
