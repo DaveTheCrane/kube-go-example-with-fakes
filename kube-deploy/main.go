@@ -3,14 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	v1b1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
 	"path/filepath"
 
-	apiv1 "k8s.io/api/core/v1"
-	appsv1 "k8s.io/api/apps/v1"
-	apiv1b1 "k8s.io/api/extensions/v1beta1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	restclient "k8s.io/client-go/rest"
@@ -27,6 +21,29 @@ import (
 
 func main() {
 
+	createMode := flag.Bool("create", false, "Create deployment, service and ingress in kubernetes cluster")
+	listMode := flag.Bool("list", false, "List current deployment, service and ingress in kubernetes cluster")
+	deleteMode := flag.Bool("delete", false, "Delete current deployment, service and ingress in kubernetes cluster")
+
+	flag.Parse()
+	//flags to set...
+	/*
+	docker image name and tag
+	root name for everything
+	exposed path fragment
+	 */
+	if (*createMode){
+		create_all()
+	}else if (*listMode){
+		list_all()
+	}else if (*deleteMode){
+		delete_all()
+	}else{
+		flag.Usage()
+	}
+}
+
+func create_all() {
 	//specifications
 	labels := map[string]string{
 		"app": "hello-world",
@@ -53,10 +70,45 @@ func main() {
 
 	// Create ingress service
 	fmt.Println("Creating Load Balancer...")
-	lbInstance := createLoadBalancer(config, ingress)
+	lbInstance := createIngress(config, ingress)
 	fmt.Printf("Created Load Balancer %q. \n", lbInstance.Name)
 }
 
+
+func list_all(){
+	config := resolveConfig()
+
+	listD := listDeployments(config)
+	fmt.Println("===DEPLOYMENTS===")
+	for i:=0; i < len(listD.Items); i++ {
+		it := listD.Items[i]
+		fmt.Printf("%s %s %s\n", it.Name, it.UID, it.CreationTimestamp)
+	}
+
+	listS := listServices(config)
+	fmt.Println("\n===SERVICES===")
+	for i:=0; i < len(listS.Items); i++ {
+		it := listS.Items[i]
+		fmt.Printf("%s %s %s\n", it.Name, it.UID, it.CreationTimestamp)
+	}
+
+	listI := listIngress(config)
+	fmt.Println("\n===INGRESSES===")
+	for i:=0; i < len(listI.Items); i++ {
+		it := listI.Items[i]
+		fmt.Printf("%s %s %s\n", it.Name, it.UID, it.CreationTimestamp)
+	}
+}
+
+func delete_all(){
+	config := resolveConfig()
+	deleteDeployment(config, "hello-deployment")
+	fmt.Println("deleted deployment")
+	deleteService(config, "hello-service")
+	fmt.Println("deleted service")
+	deleteIngress(config, "hello-lb")
+	fmt.Println("deleted ingress")
+}
 
 func resolveConfig() *restclient.Config {
 	var kubeconfig *string
@@ -75,103 +127,5 @@ func resolveConfig() *restclient.Config {
 	return config
 }
 
-func createDeployment(config *restclient.Config, deployment *appsv1.Deployment) *appsv1.Deployment {
-	clientset := kubernetes.NewForConfigOrDie(config)
-	deploymentsClient := clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
-	deploymentInstance, err := deploymentsClient.Create(deployment)
-	if err != nil {
-		panic(err)
-	}
 
-	return deploymentInstance
-}
-
-func createService(config *restclient.Config, service *apiv1.Service) *apiv1.Service {
-	coreV1Client := v1.NewForConfigOrDie(config)
-	serviceInstance, err := coreV1Client.Services(apiv1.NamespaceDefault).Create(service)
-	if err != nil {
-		panic(err)
-	}
-	return serviceInstance
-}
-
-func createLoadBalancer(config *restclient.Config, ingress *apiv1b1.Ingress) *apiv1b1.Ingress {
-
-	extV1B1Client := v1b1.NewForConfigOrDie(config)
-	ingressInstance, err := extV1B1Client.Ingresses("default").Create(ingress)
-	if err != nil {
-		panic(err)
-	}
-	return ingressInstance
-
-}
-
-// 	// Update Deployment
-// 	prompt()
-// 	fmt.Println("Updating deployment...")
-// 	//    You have two options to Update() this Deployment:
-// 	//
-// 	//    1. Modify the "deployment" variable and call: Update(deployment).
-// 	//       This works like the "kubectl replace" command and it overwrites/loses changes
-// 	//       made by other clients between you Create() and Update() the object.
-// 	//    2. Modify the "result" returned by Get() and retry Update(result) until
-// 	//       you no longer get a conflict error. This way, you can preserve changes made
-// 	//       by other clients between Create() and Update(). This is implemented below
-// 	//			 using the retry utility package included with client-go. (RECOMMENDED)
-// 	//
-// 	// More Info:
-// 	// https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-
-// 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-// 		// Retrieve the latest version of Deployment before attempting update
-// 		// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-// 		result, getErr := deploymentsClient.Get("demo-deployment", metav1.GetOptions{})
-// 		if getErr != nil {
-// 			panic(fmt.Errorf("Failed to get latest version of Deployment: %v", getErr))
-// 		}
-
-// 		result.Spec.Replicas = int32Ptr(1)                           // reduce replica count
-// 		result.Spec.Template.Spec.Containers[0].Image = "nginx:1.13" // change nginx version
-// 		_, updateErr := deploymentsClient.Update(result)
-// 		return updateErr
-// 	})
-// 	if retryErr != nil {
-// 		panic(fmt.Errorf("Update failed: %v", retryErr))
-// 	}
-// 	fmt.Println("Updated deployment...")
-
-// 	// List Deployments
-// 	prompt()
-// 	fmt.Printf("Listing deployments in namespace %q:\n", apiv1.NamespaceDefault)
-// 	list, err := deploymentsClient.List(metav1.ListOptions{})
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	for _, d := range list.Items {
-// 		fmt.Printf(" * %s (%d replicas)\n", d.Name, *d.Spec.Replicas)
-// 	}
-
-// 	// Delete Deployment
-// 	prompt()
-// 	fmt.Println("Deleting deployment...")
-// 	deletePolicy := metav1.DeletePropagationForeground
-// 	if err := deploymentsClient.Delete("demo-deployment", &metav1.DeleteOptions{
-// 		PropagationPolicy: &deletePolicy,
-// 	}); err != nil {
-// 		panic(err)
-// 	}
-// 	fmt.Println("Deleted deployment.")
-// }
-
-// func prompt() {
-// 	fmt.Printf("-> Press Return key to continue.")
-// 	scanner := bufio.NewScanner(os.Stdin)
-// 	for scanner.Scan() {
-// 		break
-// 	}
-// 	if err := scanner.Err(); err != nil {
-// 		panic(err)
-// 	}
-// 	fmt.Println()
-// }
 
