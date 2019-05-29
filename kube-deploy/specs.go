@@ -4,12 +4,15 @@ import (
 	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
+	apiv1b1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 /* build a deployment, i.e. a persistent set of pods */
 func deploymentSpec(deploymentName string, imageName string, imageTag string, 
-	containerName string, containerPort int32, 
+	containerName string, containerPort int,
+	numReplicas int32,
 	labels map[string]string) *appsv1.Deployment {
 	
 	deployment := &appsv1.Deployment{
@@ -17,7 +20,7 @@ func deploymentSpec(deploymentName string, imageName string, imageTag string,
 			Name: deploymentName,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(2),
+			Replicas: int32Ptr(numReplicas),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
@@ -34,7 +37,7 @@ func deploymentSpec(deploymentName string, imageName string, imageTag string,
 								{
 									Name:          "http",
 									Protocol:      apiv1.ProtocolTCP,
-									ContainerPort: containerPort,
+									ContainerPort: int32(containerPort),
 								},
 							},
 						},
@@ -48,7 +51,7 @@ func deploymentSpec(deploymentName string, imageName string, imageTag string,
 }
 
 /* wrap a deployment in a service, exposing it to outside world */
-func serviceSpec(serviceName string, servicePort int32,
+func serviceSpec(serviceName string, servicePort int,
 	labels map[string]string) *apiv1.Service {
 
 	service := &apiv1.Service{
@@ -60,7 +63,7 @@ func serviceSpec(serviceName string, servicePort int32,
 			Selector: labels,
 			Ports: []apiv1.ServicePort{
 				{
-					Port: servicePort,
+					Port: int32(servicePort),
 				},
 			},
 		},
@@ -69,4 +72,40 @@ func serviceSpec(serviceName string, servicePort int32,
 	return service
 }
 
+/* spec for an Ingress service to load balance a service rather than the user access it directly */
+func ingressLoadBalancerSpec(lbName string, host string, path string, rewrittenPath string, serviceName string, servicePort int) *apiv1b1.Ingress {
+	ingress := &apiv1b1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: lbName,
+			Annotations: map[string]string{
+				"nginx.ingress.kubernetes.io/use-regex": "true",
+				"nginx.ingress.kubernetes.io/rewrite-target": rewrittenPath,
+			},
+		},
+		Spec: apiv1b1.IngressSpec{
+			Rules:[]apiv1b1.IngressRule{
+				{
+					Host: host,
+					IngressRuleValue: apiv1b1.IngressRuleValue{
+						HTTP: &apiv1b1.HTTPIngressRuleValue{
+							Paths: []apiv1b1.HTTPIngressPath{
+								{
+									Path: path,
+									Backend:apiv1b1.IngressBackend{
+										ServiceName: serviceName,
+										ServicePort: intOrStr(servicePort),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return ingress
+}
+
 func int32Ptr(i int32) *int32 { return &i }
+func intOrStr(i int) intstr.IntOrString { return intstr.FromInt(i) }

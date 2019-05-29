@@ -5,11 +5,14 @@ created by the `../hello-go` program.
 
 The code has been developed test first, with unit and integration tests. 
 
-## Setup
+## Setup Go Environment
 
 `go get github.com/stretchr/testify`
+
 `go get k8s.io/client-go@v11.0.0`
+
 `go get k8s.io/api@kubernetes-1.14.0`
+
 `go get k8s.io/apimachinery@kubernetes-1.14.0`
 
 ## Build binary
@@ -18,27 +21,44 @@ The code has been developed test first, with unit and integration tests.
 
 ## Run in MiniKube  (Create Deployment)
 
+`minikube addons enable ingress`
 `minikube start`
+
+
 `kubectl get pod` 
 
+*Output*
 `No resources found`
 
-Make sure the hello-go docker image is made available to the minikube registry (see [../hello-go/README])
+Now make sure the hello-go docker image is made available to the minikube registry (see [../hello-go/README])
 
 `./hello-kube-deploy`
 `kubectl get pod`
 
+*Output*
 ```
-NAME                              READY     STATUS         RESTARTS   AGE
-demo-deployment-7c9964f64-lw8kn   0/1       ErrImagePull   0          8s
-demo-deployment-7c9964f64-skrnq   0/1       ErrImagePull   0          8s
+NAME                                READY     STATUS    RESTARTS   AGE
+hello-deployment-57648cd8c4-46xtx   1/1       Running   1          2h
+hello-deployment-57648cd8c4-hpqqd   1/1       Running   1          2h
 ```
 
-`kubectl expose deployment demo-deployment --type=NodePort`
+`kubectl get services`
 
-`curl -X GET http://192.168.99.101:30041/hello/maple`
+*Output*
+```
+NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+hello-service   NodePort    10.107.54.138   <none>        8090:30280/TCP   2h
+kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP          2d
+```
 
-### Delete Deployment (but leave minikube running)
+### Test Manually via service URL directly
 
-`kubectl delete deployment demo-deployment`
-`curl -X GET $(minikube service demo-deployment --url)/hello/kubert` -> `Hello, kubert`
+`curl -X GET $(minikube service demo-deployment --url)/hello/kubert`
+
+*Output*
+`Hello, kubert`
+
+### Manually Delete Deployment (but leave minikube running)
+
+`kubectl delete deployment hello-deployment`
+`kubectl delee service hello-service`

@@ -4,10 +4,12 @@ import (
 	"flag"
 	"fmt"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	v1b1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
 	"path/filepath"
 
 	apiv1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	apiv1b1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -29,9 +31,13 @@ func main() {
 	labels := map[string]string{
 		"app": "hello-world",
 	}
-	containerPort := int32(8090)
-	deployment := deploymentSpec("hello-deployment", "hello-go", "0.0.1", "hello-web-container", containerPort, labels)
+	containerPort := 8090
+	deployment := deploymentSpec("hello-deployment",
+		"hello-go", "0.0.1",
+		"hello-web-container", containerPort,
+		5, labels)
 	service := serviceSpec("hello-service", containerPort, labels)
+	ingress := ingressLoadBalancerSpec("hello-lb", "mini.kube.io", "/hi/(.*)", "/hello/$1", "hello-service", containerPort)
 
 	config := resolveConfig()
 
@@ -44,6 +50,11 @@ func main() {
 	fmt.Println("Wrapping in service...")
 	serviceInstance := createService(config, service)
 	fmt.Printf("Wrapped service %q. \n", serviceInstance.Name)
+
+	// Create ingress service
+	fmt.Println("Creating Load Balancer...")
+	lbInstance := createLoadBalancer(config, ingress)
+	fmt.Printf("Created Load Balancer %q. \n", lbInstance.Name)
 }
 
 
@@ -82,6 +93,17 @@ func createService(config *restclient.Config, service *apiv1.Service) *apiv1.Ser
 		panic(err)
 	}
 	return serviceInstance
+}
+
+func createLoadBalancer(config *restclient.Config, ingress *apiv1b1.Ingress) *apiv1b1.Ingress {
+
+	extV1B1Client := v1b1.NewForConfigOrDie(config)
+	ingressInstance, err := extV1B1Client.Ingresses("default").Create(ingress)
+	if err != nil {
+		panic(err)
+	}
+	return ingressInstance
+
 }
 
 // 	// Update Deployment

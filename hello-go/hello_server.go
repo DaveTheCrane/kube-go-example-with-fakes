@@ -12,12 +12,13 @@ type HelloServer struct {
 
 func (serv *HelloServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
+	resp.Write([]byte(fmt.Sprintf("[[[request :: %s :: ]]]\n", req.URL.String())))
 	var name string
 	if (strings.HasPrefix(path, "/hello")) {
 		if (len(path) > len("/hello/")) {
 			name = path[len("/hello/"):]
 		} else {
-			name = ""
+			name = req.URL.String()
 		}
 		switch req.Method {
 		case http.MethodGet:
@@ -32,9 +33,9 @@ func (serv *HelloServer) greet(resp http.ResponseWriter, name string) {
 	resp.WriteHeader(http.StatusOK)
 	var msg string
 	if (name != "") {
-		msg = fmt.Sprintf("Hello, %s", name)
+		msg = fmt.Sprintf("Hello, %s\n", name)
 	} else {
-		msg = "Hello"
+		msg = "Hello\n"
 	}
 	
 	fmt.Print(fmt.Sprintf("serving greeting - %s\n", msg))
@@ -43,5 +44,5 @@ func (serv *HelloServer) greet(resp http.ResponseWriter, name string) {
 
 func (serv *HelloServer) notFound(resp http.ResponseWriter) {
 	resp.WriteHeader(http.StatusNotFound)
-	resp.Write([]byte("Not Found"))
+	resp.Write([]byte("Not Found\n"))
 }
