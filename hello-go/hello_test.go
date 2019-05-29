@@ -18,7 +18,7 @@ func TestGETHello(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, response.Body.String(), "Hello, Fred")
+		assert.Equal(t, "Hello, Fred\n", response.Body.String())
 	})
 
 	t.Run("greet Wilma", func(t *testing.T) {
@@ -28,7 +28,7 @@ func TestGETHello(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, response.Body.String(), "Hello, Wilma")
+		assert.Equal(t, "Hello, Wilma\n", response.Body.String())
 	})
 
 	t.Run("greet with no path", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestGETHello(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, response.Body.String(), "Hello")
+		assert.Equal(t, "Hello\n", response.Body.String())
 	})
 
 	t.Run("greet with long path", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestGETHello(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, response.Body.String(), "Hello, hello/is/anybody/in/there")
+		assert.Equal(t, "Hello, hello/is/anybody/in/there\n", response.Body.String())
 	})
 
 	t.Run("call non greeting path", func(t *testing.T) {
