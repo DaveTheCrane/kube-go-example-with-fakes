@@ -60,4 +60,4 @@ image registry, you need to set environment variables up to point the local dock
 
 ### Build the Docker Image as before
 
-`docker build .`
+`docker build -t hello-go:0.0.1 .`
