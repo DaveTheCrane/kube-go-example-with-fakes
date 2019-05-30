@@ -4,9 +4,20 @@ import "fmt"
 
 type operations struct {
 	sys *k8sSystem
+
 	createMode bool
 	listMode bool
 	deleteMode bool
+
+	prefix string
+	imageName string
+	imageTag string
+
+	hostname string
+	externalPath string
+
+	replicas int
+
 }
 
 func (ops *operations) execute() bool {
@@ -22,21 +33,25 @@ func (ops *operations) execute() bool {
 	return true
 }
 
+func (ops *operations) label(s string) string {
+	return fmt.Sprintf("%s-%s", ops.prefix, s)
+}
+
 func (ops *operations) create_all() {
 
 	sys := ops.sys
 
 	//specifications
 	labels := map[string]string{
-		"app": "hello-world",
+		"app": ops.label("world"),
 	}
 	containerPort := 8090
-	deployment := deploymentSpec("hello-deployment",
-		"hello-go", "0.0.1",
-		"hello-web-container", containerPort,
-		5, labels)
-	service := serviceSpec("hello-service", containerPort, labels)
-	ingress := ingressLoadBalancerSpec("hello-lb", "mini.kube.io", "/hi/(.*)", "/hello/$1", "hello-service", containerPort)
+	deployment := deploymentSpec(ops.label("deployment"),
+		ops.imageName, ops.imageTag,
+		ops.label("web-container"), containerPort,
+		int32(ops.replicas), labels)
+	service := serviceSpec(ops.label("service"), containerPort, labels)
+	ingress := ingressLoadBalancerSpec(ops.label("lb"), ops.hostname, fmt.Sprintf("/%s/(.*)", ops.externalPath), "/hello/$1", ops.label("service"), containerPort)
 
 	// Create Deployment
 	fmt.Println("Creating deployment...")
@@ -85,10 +100,10 @@ func (ops *operations) delete_all() {
 
 	sys := ops.sys
 
-	deleteDeployment(sys, "hello-deployment")
+	deleteDeployment(sys, ops.label("deployment"))
 	fmt.Println("deleted deployment")
-	deleteService(sys, "hello-service")
+	deleteService(sys, ops.label("service"))
 	fmt.Println("deleted service")
-	deleteIngress(sys, "hello-lb")
+	deleteIngress(sys, ops.label("lb"))
 	fmt.Println("deleted ingress")
 }

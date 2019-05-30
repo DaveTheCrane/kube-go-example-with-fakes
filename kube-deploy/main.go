@@ -24,6 +24,16 @@ func main() {
 	listMode := flag.Bool("list", false, "List current deployment, service and ingress in kubernetes cluster")
 	deleteMode := flag.Bool("delete", false, "Delete current deployment, service and ingress in kubernetes cluster")
 
+	prefix := flag.String("prefix", "hello", "prefix used to identify artefacts in the kubernetes system")
+
+	imageName := flag.String("image-name", "hello-go", "docker image name for service to be deployed")
+	imageTag := flag.String("image-tag", "0.0.1", "docker image tag for service to be deployed")
+
+	hostname := flag.String("host-name", "mini.kube.io", "hostname via which service is exposed in the load balancer")
+	externalPath := flag.String("ext-path", "hi", "path used by load balancer rewrite rule to access the service")
+
+	replicas := flag.Int("replicas", 5, "number of load-balanced replicas to deploy")
+
 	flag.Parse()
 	//flags to set...
 	/*
@@ -37,6 +47,16 @@ func main() {
 		createMode: *createMode,
 		listMode: *listMode,
 		deleteMode: *deleteMode,
+
+		prefix: *prefix,
+
+		imageName: *imageName,
+		imageTag: *imageTag,
+
+		hostname: *hostname,
+		externalPath: *externalPath,
+
+		replicas: *replicas,
 	}
 
 	if (!ops.execute()) {
