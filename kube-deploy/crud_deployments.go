@@ -1,38 +1,29 @@
 package main
 
 import(
-	"k8s.io/client-go/kubernetes"
-	v12 "k8s.io/client-go/kubernetes/typed/apps/v1"
-	apiv1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	restclient "k8s.io/client-go/rest"
 )
 
-func deploymentsClient(config *restclient.Config) v12.DeploymentInterface {
-	clientset := kubernetes.NewForConfigOrDie(config)
-	return clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
-}
-
-func createDeployment(config *restclient.Config, deployment *appsv1.Deployment) *appsv1.Deployment {
-	deploymentInstance, err := deploymentsClient(config).Create(deployment)
+func createDeployment(sys *k8sSystem, deployment *appsv1.Deployment) *appsv1.Deployment {
+	deploymentInstance, err := sys.deployments.Create(deployment)
 	if err != nil {
 		panic(err)
 	}
 	return deploymentInstance
 }
 
-func listDeployments(config *restclient.Config) *appsv1.DeploymentList {
-	deploymentList, err := deploymentsClient(config).List(metav1.ListOptions{})
+func listDeployments(sys *k8sSystem) *appsv1.DeploymentList {
+	deploymentList, err := sys.deployments.List(metav1.ListOptions{})
 	if err != nil {
 		panic(err)
 	}
 	return deploymentList
 }
 
-func deleteDeployment(config *restclient.Config, name string) {
+func deleteDeployment(sys *k8sSystem, name string) {
 	deletePolicy := metav1.DeletePropagationForeground
-	err := deploymentsClient(config).Delete(name, &metav1.DeleteOptions{
+	err := sys.deployments.Delete(name, &metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	});
 	if err != nil {

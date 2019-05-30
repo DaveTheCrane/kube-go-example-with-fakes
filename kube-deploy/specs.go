@@ -50,7 +50,7 @@ func deploymentSpec(deploymentName string, imageName string, imageTag string,
 	return deployment
 }
 
-/* wrap a deployment in a service, exposing it to outside world */
+/* wrap a deployment in a service (of type ClusterIP, i.e. without exposing it to outside world) */
 func serviceSpec(serviceName string, servicePort int,
 	labels map[string]string) *apiv1.Service {
 
@@ -59,7 +59,7 @@ func serviceSpec(serviceName string, servicePort int,
 			Name: serviceName,
 		},
 		Spec: apiv1.ServiceSpec{
-			Type:     apiv1.ServiceTypeNodePort,
+			Type:     apiv1.ServiceTypeClusterIP,
 			Selector: labels,
 			Ports: []apiv1.ServicePort{
 				{

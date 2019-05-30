@@ -56,43 +56,43 @@ func create_all() {
 	service := serviceSpec("hello-service", containerPort, labels)
 	ingress := ingressLoadBalancerSpec("hello-lb", "mini.kube.io", "/hi/(.*)", "/hello/$1", "hello-service", containerPort)
 
-	config := resolveConfig()
+	sys := resolveSys()
 
 	// Create Deployment
 	fmt.Println("Creating deployment...")
-	deploymentInstance := createDeployment(config, deployment)
+	deploymentInstance := createDeployment(sys, deployment)
 	fmt.Printf("Created deployment %q.\n", deploymentInstance.GetObjectMeta().GetName())
 
 	// Create Service To Wrap Deployment
 	fmt.Println("Wrapping in service...")
-	serviceInstance := createService(config, service)
+	serviceInstance := createService(sys, service)
 	fmt.Printf("Wrapped service %q. \n", serviceInstance.Name)
 
 	// Create ingress service
 	fmt.Println("Creating Load Balancer...")
-	lbInstance := createIngress(config, ingress)
+	lbInstance := createIngress(sys, ingress)
 	fmt.Printf("Created Load Balancer %q. \n", lbInstance.Name)
 }
 
 
 func list_all(){
-	config := resolveConfig()
+	sys := resolveSys()
 
-	listD := listDeployments(config)
+	listD := listDeployments(sys)
 	fmt.Println("===DEPLOYMENTS===")
 	for i:=0; i < len(listD.Items); i++ {
 		it := listD.Items[i]
 		fmt.Printf("%s %s %s\n", it.Name, it.UID, it.CreationTimestamp)
 	}
 
-	listS := listServices(config)
+	listS := listServices(sys)
 	fmt.Println("\n===SERVICES===")
 	for i:=0; i < len(listS.Items); i++ {
 		it := listS.Items[i]
 		fmt.Printf("%s %s %s\n", it.Name, it.UID, it.CreationTimestamp)
 	}
 
-	listI := listIngress(config)
+	listI := listIngress(sys)
 	fmt.Println("\n===INGRESSES===")
 	for i:=0; i < len(listI.Items); i++ {
 		it := listI.Items[i]
@@ -101,12 +101,13 @@ func list_all(){
 }
 
 func delete_all(){
-	config := resolveConfig()
-	deleteDeployment(config, "hello-deployment")
+	sys := resolveSys()
+
+	deleteDeployment(sys, "hello-deployment")
 	fmt.Println("deleted deployment")
-	deleteService(config, "hello-service")
+	deleteService(sys, "hello-service")
 	fmt.Println("deleted service")
-	deleteIngress(config, "hello-lb")
+	deleteIngress(sys, "hello-lb")
 	fmt.Println("deleted ingress")
 }
 
@@ -125,6 +126,10 @@ func resolveConfig() *restclient.Config {
 	}
 
 	return config
+}
+
+func resolveSys() *k8sSystem {
+	return productionK8sSystem(resolveConfig())
 }
 
 
