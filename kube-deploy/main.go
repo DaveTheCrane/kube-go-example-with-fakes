@@ -23,6 +23,7 @@ func main() {
 	createMode := flag.Bool("create", false, "Create deployment, service and ingress in kubernetes cluster")
 	listMode := flag.Bool("list", false, "List current deployment, service and ingress in kubernetes cluster")
 	deleteMode := flag.Bool("delete", false, "Delete current deployment, service and ingress in kubernetes cluster")
+	updateMode := flag.Bool("update", false, "Update selected features of current deployment, currently only external path and replica count supported")
 
 	prefix := flag.String("prefix", "hello", "prefix used to identify artefacts in the kubernetes system")
 
@@ -47,6 +48,7 @@ func main() {
 		createMode: *createMode,
 		listMode: *listMode,
 		deleteMode: *deleteMode,
+		updateMode: *updateMode,
 
 		prefix: *prefix,
 

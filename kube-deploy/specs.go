@@ -83,19 +83,25 @@ func ingressLoadBalancerSpec(lbName string, host string, path string, rewrittenP
 			},
 		},
 		Spec: apiv1b1.IngressSpec{
-			Rules:[]apiv1b1.IngressRule{
-				{
-					Host: host,
-					IngressRuleValue: apiv1b1.IngressRuleValue{
-						HTTP: &apiv1b1.HTTPIngressRuleValue{
-							Paths: []apiv1b1.HTTPIngressPath{
-								{
-									Path: path,
-									Backend:apiv1b1.IngressBackend{
-										ServiceName: serviceName,
-										ServicePort: intOrStr(servicePort),
-									},
-								},
+			Rules: ingressLoadBalancerRules(host, path, serviceName, servicePort),
+		},
+	}
+
+	return ingress
+}
+
+func ingressLoadBalancerRules(host string, path string, serviceName string, servicePort int) []apiv1b1.IngressRule {
+	return []apiv1b1.IngressRule{
+		{
+			Host: host,
+			IngressRuleValue: apiv1b1.IngressRuleValue{
+				HTTP: &apiv1b1.HTTPIngressRuleValue{
+					Paths: []apiv1b1.HTTPIngressPath{
+						{
+							Path: path,
+							Backend:apiv1b1.IngressBackend{
+								ServiceName: serviceName,
+								ServicePort: intOrStr(servicePort),
 							},
 						},
 					},
@@ -103,8 +109,6 @@ func ingressLoadBalancerSpec(lbName string, host string, path string, rewrittenP
 			},
 		},
 	}
-
-	return ingress
 }
 
 func int32Ptr(i int32) *int32 { return &i }

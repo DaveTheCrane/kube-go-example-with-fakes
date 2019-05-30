@@ -8,6 +8,7 @@ type operations struct {
 	createMode bool
 	listMode bool
 	deleteMode bool
+	updateMode bool
 
 	prefix string
 	imageName string
@@ -25,8 +26,10 @@ func (ops *operations) execute() bool {
 		ops.create_all()
 	}else if (ops.listMode){
 		ops.list_all()
-	}else if (ops.deleteMode){
+	}else if (ops.deleteMode) {
 		ops.delete_all()
+	}else if (ops.updateMode) {
+		ops.update_all()
 	}else{
 		return false
 	}
@@ -35,6 +38,10 @@ func (ops *operations) execute() bool {
 
 func (ops *operations) label(s string) string {
 	return fmt.Sprintf("%s-%s", ops.prefix, s)
+}
+
+func (ops *operations) fullExtPath() string {
+	return fmt.Sprintf("/%s/(.*)", ops.externalPath)
 }
 
 func (ops *operations) create_all() {
@@ -51,7 +58,7 @@ func (ops *operations) create_all() {
 		ops.label("web-container"), containerPort,
 		int32(ops.replicas), labels)
 	service := serviceSpec(ops.label("service"), containerPort, labels)
-	ingress := ingressLoadBalancerSpec(ops.label("lb"), ops.hostname, fmt.Sprintf("/%s/(.*)", ops.externalPath), "/hello/$1", ops.label("service"), containerPort)
+	ingress := ingressLoadBalancerSpec(ops.label("lb"), ops.hostname, ops.fullExtPath(), "/hello/$1", ops.label("service"), containerPort)
 
 	// Create Deployment
 	fmt.Println("Creating deployment...")
@@ -106,4 +113,17 @@ func (ops *operations) delete_all() {
 	fmt.Println("deleted service")
 	deleteIngress(sys, ops.label("lb"))
 	fmt.Println("deleted ingress")
+}
+
+func (ops *operations) update_all() {
+
+	sys := ops.sys
+
+	deploymentName := ops.label("deployment")
+	updateDeploymentSize(sys, deploymentName, ops.replicas)
+	fmt.Println("updated deployment replica count for %s", deploymentName)
+
+	ingressName := ops.label("lb")
+	updateIngressExternalPath(sys, ingressName, ops.fullExtPath())
+	fmt.Println("updated external path for %s", ingressName)
 }
