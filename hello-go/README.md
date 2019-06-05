@@ -4,17 +4,23 @@ The code in this folder implements a simple "hello world" HTTP server, using gol
 
 The code has been developed test first, with unit and integration tests. 
 
+Most operations can be run via a Makefile, or by the `go` command directly. I've presented both in the instructions below.
+
 ## Setup
 
-`go get github.com/stretchr/testify`
+`make init`
+
+or `go get github.com/stretchr/testify`
 
 ## Run Tests
 
-`go test`
+`make test`
+
+or `go test`
 
 ## Run Server Locally (and verify it manually)
 
-`go build`
+`make build` (or `go build`)
 `./hello-go` 
 
 This will block the shell, until killed with a `Ctrl-C`.
@@ -31,6 +37,10 @@ You'll see a line appear in the output of the server terminal:
 
 Rather than build inside the official docker image, we're going to build the docker image from a minimal Scratch, and host
 a statically linked binary that we've created on the host:
+
+`make docker`
+
+Or, to do it manually in two stages:
 
 ### Build the statically-linked binary
 `CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o hello-go-static .`
@@ -53,6 +63,12 @@ image registry, you need to set environment variables up to point the local dock
 ### Start MiniKube
 
 `minikube start`
+
+followed by
+
+`make kube`
+
+or, to do it manually in two steps:
 
 ### Export MiniKube environment to current shell
 
