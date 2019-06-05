@@ -44,12 +44,10 @@ func updateIngressExternalPath(sys *k8sSystem, name string, newPath string) {
 		onlyPath := result.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0]
 		currentPath := onlyPath.Path
 		if currentPath != newPath {
-			fmt.Println("ext path for %s: change from %s to %s", name, currentPath, newPath)
 			result.Spec.Rules = ingressLoadBalancerRules(result.Spec.Rules[0].Host, newPath, onlyPath.Backend.ServiceName, int(onlyPath.Backend.ServicePort.IntVal))
 			_, updateErr := sys.ingress.Update(result)
 			return updateErr
 		} else {
-			fmt.Println("ext path for %s: no change %s to %s", name, currentPath, newPath)
 			return nil
 		}
 	})

@@ -121,9 +121,9 @@ func (ops *operations) update_all() {
 
 	deploymentName := ops.label("deployment")
 	updateDeploymentSize(sys, deploymentName, ops.replicas)
-	fmt.Println("updated deployment replica count for %s", deploymentName)
+	fmt.Printf("updated deployment replica count for %s\n", deploymentName)
 
 	ingressName := ops.label("lb")
 	updateIngressExternalPath(sys, ingressName, ops.fullExtPath())
-	fmt.Println("updated external path for %s", ingressName)
+	fmt.Printf("updated external path for %s\n", ingressName)
 }
