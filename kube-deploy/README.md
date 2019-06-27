@@ -11,7 +11,7 @@ The program can deploy this setup, remove it, and update the replica count or ur
 prefix for internal names of items can be overridden. It also provides a rudimentary listing
 mechanism, which is probably less useful than using `kubectl`. 
 
-The code has been developed in an ad hoc fashion, with some tests added as I go along. 
+The code has been developed in an ad hoc fashion, with some tests added as I go along (and figured out the client-go fake system).
 
 ## Setup Go Environment
 
